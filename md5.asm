@@ -21,6 +21,10 @@ _md5:                               ; rdi = data
 
 .new_block:
     xor     rcx, rcx
+    push    r10
+    push    r11
+    push    r12
+    push    r13
 .loop:
     cmp     rcx, 16
     jae     .round_2
@@ -66,31 +70,45 @@ _md5:                               ; rdi = data
     or      rax, r11
     xor     rax, r12    
 .funnel:
-    add     rax, r10
+    add     rax, r10                    ; F += A
     lea     rdx, [rel K]
-    add     eax, dword [rdx + rcx]
+    add     eax, dword [rdx + rcx]      ; F += K[i]
     and     rbx, 15
-    add     eax, dword [rdi + rbx]
-
-    mov     r10, r13
-    mov     r13, r12
-    mov     r12, r11
+    add     eax, dword [rdi + rbx]      ; F += M[g]
+    mov     r10, r13                    ; A = D
+    mov     r13, r12                    ; D = C
+    mov     r12, r11                    ; C = B
     lea     rdx, [rel s]
     mov     rbx, rcx
     shr     rbx, 2
     and     rbx, 12
     add     rdx, rbx
     mov     rbx, rcx
-    and     rbx, 3
-    add     rdx, rbx
-    mov     bl, byte [rdx]
-    xchg    rbx, rcx
+    and     rcx, 3
+    mov     cl, byte [rdx + rcx]
     rol     eax, cl
-    xchg    rbx, rcx
-    add     r11, rax
+    mov     rcx, rbx
+    add     r11, rax                    ; B += leftrotate(F, s[i])
     inc     rcx
     test    rcx, 64
     jz      .loop
+
+    mov     rax, r13
+    pop     r13
+    add     r13, rax
+
+    mov     rax, r12
+    pop     r12
+    add     r12, rax
+
+    mov     rax, r11
+    pop     r11
+    add     r11, rax
+
+    mov     rax, r10
+    pop     r10
+    add     r10, rax
+
     add     rdi, 64
     sub     rsi, 64
     cmp     rsi, 0
