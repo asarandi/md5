@@ -1,0 +1,6 @@
+*.o
+md5
+a.out
+.DS_Store
+._*
+*.sw*
