@@ -40,11 +40,12 @@ section .text
             xor     al, al
             rep     stosb
 
-            bswap   r9d
-            mov     dword [rdi], r9d
-            shr     r9, 32
+            shl     r9, 3
             bswap   r9d
             mov     dword [rdi-4], r9d
+            shr     r9, 32
+            bswap   r9d
+            mov     dword [rdi], r9d
 
             lea     rdi, [rel buf]
             inc     r14
@@ -98,12 +99,10 @@ section .text
 .funnel:
             add     rax, r10                    ; F += A
             lea     rdx, [rel K_const]
-            mov     edx, dword [rdx + rcx]      ; F += K[i]
-;            bswap   edx
+            mov     edx, dword [rdx + rcx*4]      ; F += K[i]
             add     eax, edx
             and     rbx, 15
-            mov     edx, dword [rdi + rbx]      ; F += M[g]
-            bswap   edx
+            mov     edx, dword [rdi + rbx*4]      ; F += M[g]
             add     eax, edx
 
             lea     rdx, [rel s_const]
@@ -151,13 +150,13 @@ section .text
 
             lea     rax, [rel result]
 
-;            bswap   r10d
+            bswap   r10d
             mov     dword [rax], r10d
-;            bswap   r11d
+            bswap   r11d
             mov     dword [rax + 4], r11d
-;            bswap   r12d
+            bswap   r12d
             mov     dword [rax + 8], r12d
-;            bswap   r13d
+            bswap   r13d
             mov     dword [rax + 12], r13d
 
             ret
