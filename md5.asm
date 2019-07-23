@@ -9,6 +9,12 @@ section .text
  global md5
  md5:
 %endif
+
+            push    rbx
+            push    r12
+            push    r13
+            push    r14
+
             mov     r9, rsi                     ; rdi = void *buf, rsi = size_t count
             xor     r14, r14
 
@@ -157,6 +163,11 @@ section .text
             mov     dword [rax + 8], r12d
             bswap   r13d
             mov     dword [rax + 12], r13d
+
+            pop     r14
+            pop     r13
+            pop     r12
+            pop     rbx
 
             ret
 
