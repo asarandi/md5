@@ -30,7 +30,10 @@ int main(int ac, char **av)
         return msg(fd, "fstat() failed");
     mem = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mem == MAP_FAILED)
-        return msg(fd, "mmap() failed");
+    {
+        if (st.st_size)
+            return msg(fd, "mmap() failed");
+    }
     hash = md5(mem, st.st_size);
     munmap(mem, st.st_size);
     close(fd);

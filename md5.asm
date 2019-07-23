@@ -9,7 +9,8 @@ section .text
  global md5
  md5:
 %endif
-            push    rsi                         ; rdi = void *buf, rsi = size_t count
+            mov     r9, rsi                     ; rdi = void *buf, rsi = size_t count
+            xor     r14, r14
 
             mov     r10, 0x67452301             ; A
             mov     r11, 0xefcdab89             ; B
@@ -17,6 +18,33 @@ section .text
             mov     r13, 0x10325476             ; D
 
 .new_block:
+            cmp     rsi, 64
+            jae     .full_block
+
+            mov     rcx, rsi
+            mov     rdx, rsi
+            lea     rsi, [rel buf]
+            xchg    rdi, rsi
+            rep     movsb
+            mov     al, 0x80
+            stosb
+
+            mov     rcx, 64
+            mov     rsi, rcx
+            sub     rcx, rdx
+            cmp     rcx, 9
+            jae     .x
+            add     rcx, 64
+            add     rsi, 64
+.x:         mov     rdx, rcx
+            sub     rcx, 8
+            xor     al, al
+            rep     stosb
+            mov     qword [rdi], r9
+            lea     rdi, [rel buf]
+            inc     r14
+
+.full_block:
             xor     rcx, rcx
             push    r10
             push    r11
@@ -113,13 +141,15 @@ section .text
 
             jmp     .new_block
 .done:
-            pop     rsi
+            test    r14, r14
+            jz      .new_block
+
             lea     rax, [rel result]
 
             mov     dword [rax], r10d
-            mov     dword [rax+4], r11d
-            mov     dword [rax+8], r12d
-            mov     dword [rax+12], r13d
+            mov     dword [rax + 4], r11d
+            mov     dword [rax + 8], r12d
+            mov     dword [rax + 12], r13d
 
             ret
 
@@ -149,3 +179,5 @@ K_const     dd 0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee
             dd 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
 
 result      times 4 dd 0
+
+buf         times 128 db 0
