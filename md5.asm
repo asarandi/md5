@@ -28,11 +28,12 @@ section .text
             rep     movsb
             mov     al, 0x80
             stosb
+            inc     rdx
 
             mov     rcx, 64
             mov     rsi, rcx
             sub     rcx, rdx
-            cmp     rcx, 9
+            cmp     rcx, 8
             jae     .size
             add     rcx, 64
             add     rsi, 64
@@ -41,11 +42,9 @@ section .text
             rep     stosb
 
             shl     r9, 3
-            bswap   r9d
-            mov     dword [rdi-4], r9d
-            shr     r9, 32
-            bswap   r9d
             mov     dword [rdi], r9d
+            shr     r9, 32
+            mov     dword [rdi+4], r9d
 
             lea     rdi, [rel buf]
             inc     r14
