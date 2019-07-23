@@ -33,14 +33,19 @@ section .text
             mov     rsi, rcx
             sub     rcx, rdx
             cmp     rcx, 9
-            jae     .x
+            jae     .size
             add     rcx, 64
             add     rsi, 64
-.x:         mov     rdx, rcx
-            sub     rcx, 8
+.size:      sub     rcx, 8
             xor     al, al
             rep     stosb
-            mov     qword [rdi], r9
+
+            bswap   r9d
+            mov     dword [rdi], r9d
+            shr     r9, 32
+            bswap   r9d
+            mov     dword [rdi-4], r9d
+
             lea     rdi, [rel buf]
             inc     r14
 
@@ -54,12 +59,10 @@ section .text
             cmp     rcx, 16
             jae     .round_2
             mov     rbx, rcx                    ; g
-            mov     rax, r11
-            mov     rdx, rax
-            not     rax
-            and     rax, r13
-            and     rdx, r12
-            or      rax, rdx
+            mov     rax, r13
+            xor     rax, r12
+            and     rax, r11
+            xor     rax, r13
             jmp     .funnel
 .round_2:
             cmp     rcx, 32
@@ -67,13 +70,11 @@ section .text
             mov     rax, 5
             mul     rcx
             inc     rax
-            mov     rbx, rax                    ; g
-            mov     rax, r13
-            mov     rdx, rax
-            not     rax
-            and     rax, r12
-            and     rdx, r11
-            or      rax, rdx
+            mov     rbx, rax                    ; g        
+            mov     rax, r12
+            xor     rax, r11
+            and     rax, r13
+            xor     rax, r12
             jmp     .funnel
 .round_3:
             cmp     rcx, 48
@@ -97,12 +98,14 @@ section .text
 .funnel:
             add     rax, r10                    ; F += A
             lea     rdx, [rel K_const]
-            add     eax, dword [rdx + rcx]      ; F += K[i]
+            mov     edx, dword [rdx + rcx]      ; F += K[i]
+;            bswap   edx
+            add     eax, edx
             and     rbx, 15
-            add     eax, dword [rdi + rbx]      ; F += M[g]
-            mov     r10, r13                    ; A = D
-            mov     r13, r12                    ; D = C
-            mov     r12, r11                    ; C = B
+            mov     edx, dword [rdi + rbx]      ; F += M[g]
+            bswap   edx
+            add     eax, edx
+
             lea     rdx, [rel s_const]
             mov     rbx, rcx
             shr     rbx, 2
@@ -113,6 +116,10 @@ section .text
             mov     cl, byte [rdx + rcx]
             rol     eax, cl
             mov     rcx, rbx
+
+            mov     r10, r13                    ; A = D
+            mov     r13, r12                    ; D = C
+            mov     r12, r11                    ; C = B
             add     r11, rax                    ; B += leftrotate(F, s[i])
             inc     rcx
             test    rcx, 64
@@ -136,19 +143,21 @@ section .text
 
             add     rdi, 64
             sub     rsi, 64
-            cmp     rsi, 0
-            jle     .done
-
-            jmp     .new_block
+            test    rsi, rsi
+            jnz     .new_block
 .done:
             test    r14, r14
             jz      .new_block
 
             lea     rax, [rel result]
 
+;            bswap   r10d
             mov     dword [rax], r10d
+;            bswap   r11d
             mov     dword [rax + 4], r11d
+;            bswap   r12d
             mov     dword [rax + 8], r12d
+;            bswap   r13d
             mov     dword [rax + 12], r13d
 
             ret
