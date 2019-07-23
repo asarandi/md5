@@ -1,19 +1,22 @@
 bits 64
 default rel
-global md5
-
 section .text
 
-md5:                                            ; rdi = data
-                                                ; rsi = size
-            push    rsi
+%ifidn __OUTPUT_FORMAT__, macho64
+ global _md5
+ _md5:
+%elifidn __OUTPUT_FORMAT__, elf64
+ global md5
+ md5:
+%endif
+            push    rsi                         ; rdi = void *buf, rsi = size_t count
 
             mov     r10, 0x67452301             ; A
             mov     r11, 0xefcdab89             ; B
             mov     r12, 0x98badcfe             ; C
             mov     r13, 0x10325476             ; D
 
-.new_block: 
+.new_block:
             xor     rcx, rcx
             push    r10
             push    r11
@@ -62,7 +65,7 @@ md5:                                            ; rdi = data
             mov     rax, r13
             not     rax
             or      rax, r11
-            xor     rax, r12    
+            xor     rax, r12
 .funnel:
             add     rax, r10                    ; F += A
             lea     rdx, [rel K_const]
